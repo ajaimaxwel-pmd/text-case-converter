@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.0", features = ["derive"] }
 regex = "1.9.4"
+strum = "0.25.0"
+strum_macros = "0.25.2"
