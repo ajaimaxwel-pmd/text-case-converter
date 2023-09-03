@@ -1,20 +1,24 @@
-#![allow(unused)]
-
-mod checkers;
+mod checker;
+mod splitter;
 mod case_types;
-mod select_converter;
+mod converter;
+
+mod camel_case;
+mod kebab_case;
+mod macro_case;
+mod pascal_case;
+mod snake_case;
+mod train_case;
 
 use clap::{Arg, Command};
 use std::fs::File;
 use std::io::{self, BufRead, Write};
 use std::path::Path;
-use checkers::case_checkers;
-use case_types::CaseType;
-use select_converter::select_converter;
 
-fn print_type_of<T>(_: &T) {
-    println!("{}", std::any::type_name::<T>());
-}
+use checker::case_checkers;
+use case_types::CaseType;
+use converter::select_converter;
+use splitter::{get_split_type, SplitBy};
 
 fn main() -> io::Result<()> {
     let matches = Command::new("TextConverter")
@@ -40,16 +44,18 @@ fn main() -> io::Result<()> {
     let output_path = Path::new("output.txt");
     let mut output_file = File::create(&output_path)?;
 
-    let re = case_checkers(from_case_type);
-    let case_converter = select_converter(to_case_type);
+    let re = case_checkers(&from_case_type);
+    let case_converter: fn(&str, SplitBy) -> String = select_converter(&to_case_type);
 
     for line in reader.lines() {
         let line = line?;
         let mut replacements: Vec<(String, String)> = Vec::new();
         
         for cap in re.captures_iter(&line) {
+            let split_by: SplitBy = get_split_type(&from_case_type);
+
             let from_case_word = &cap[0];
-            let to_case_word = case_converter(&from_case_word);
+            let to_case_word = case_converter(&from_case_word, split_by);
             replacements.push((from_case_word.to_string(), to_case_word));
         }
 
